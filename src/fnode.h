@@ -42,6 +42,8 @@
 // External Includes
 //----------------------------------------------------------------------------------
 #include "raylib.h"             // Required for window management, 2D camera drawing and inputs detection
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>         // Required for glad initialisation
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -236,6 +238,7 @@ FNODEDEF int FSearch(char *filename, char *string);                             
 #include <math.h>               // Required for: fabs(), sqrt(), sinf(), cosf(), cos(), sin(), tan(), pow(), floor()
 #include <stdarg.h>             // Required for: va_list, va_start(), vfprintf(), va_end()
 
+#define GLAD_IMPLEMENTATION
 #include "external/glad.h"      // Required for GLAD extensions loading library, includes OpenGL headers
 
 //----------------------------------------------------------------------------------
@@ -363,6 +366,8 @@ FNODEDEF void InitFNode()
     commentsCount = 0;
     selectedCommentNodesCount = 0;
     for (int i = 0; i < MAX_NODES; i++) selectedCommentNodes[i] = -1;
+
+    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
     // Initialize OpenGL states
     SetBackfaceCulling(false);

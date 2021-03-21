@@ -221,7 +221,6 @@ void DrawScrollbar(void);                                       // Draw right in
 bool InterfaceButtonGroup(Rectangle bounds, const char *text, bool enabled);    // Button group element, returns true when pressed
 bool InterfaceButton(Rectangle bounds, const char *text);       // Button element, returns true when pressed
 bool InterfaceToggle(Rectangle bounds, bool toggle);            // Toggle Button element, returns true when active
-char *GetFileExtension(char *filename);                         // Returns the extension of a file
 bool CheckFileExtension(char *filename, char *extension);       // Check filename for specific extension
 bool CheckTextureExtension(char *filename);                     // Check filename for compatible texture extensions
 bool CheckModelExtension(char *filename);                       // Check filename for compatible mesh extensions
@@ -242,14 +241,14 @@ void CheckPreviousShader(bool makeGraph)
         timeUniformV = GetShaderLocation(shader, "vertCurrentTime");
         timeUniformF = GetShaderLocation(shader, "fragCurrentTime");
 
-        shader.locs[LOC_MAP_ALBEDO] = glGetUniformLocation(shader.id, "texture0");
-        shader.locs[LOC_MAP_NORMAL] = glGetUniformLocation(shader.id, "texture1");
-        shader.locs[LOC_MAP_METALNESS] = glGetUniformLocation(shader.id, "texture2");
-        shader.locs[LOC_MAP_ROUGHNESS] = glGetUniformLocation(shader.id, "texture3");
-        shader.locs[LOC_MAP_OCCLUSION] = glGetUniformLocation(shader.id, "texture4");
-        shader.locs[LOC_MAP_EMISSION] = glGetUniformLocation(shader.id, "texture5");
-        shader.locs[LOC_MAP_HEIGHT] = glGetUniformLocation(shader.id, "texture6");
-        shader.locs[LOC_MAP_BRDF] = glGetUniformLocation(shader.id, "texture7");
+        shader.locs[SHADER_LOC_MAP_ALBEDO] = glGetUniformLocation(shader.id, "texture0");
+        shader.locs[SHADER_LOC_MAP_NORMAL] = glGetUniformLocation(shader.id, "texture1");
+        shader.locs[SHADER_LOC_MAP_METALNESS] = glGetUniformLocation(shader.id, "texture2");
+        shader.locs[SHADER_LOC_MAP_ROUGHNESS] = glGetUniformLocation(shader.id, "texture3");
+        shader.locs[SHADER_LOC_MAP_OCCLUSION] = glGetUniformLocation(shader.id, "texture4");
+        shader.locs[SHADER_LOC_MAP_EMISSION] = glGetUniformLocation(shader.id, "texture5");
+        shader.locs[SHADER_LOC_MAP_HEIGHT] = glGetUniformLocation(shader.id, "texture6");
+        shader.locs[SHADER_LOC_MAP_BRDF] = glGetUniformLocation(shader.id, "texture7");
 
         if (makeGraph)
         {
@@ -1288,7 +1287,7 @@ void UpdateShaderData(void)
             Vector3 viewVector = { camera3d.position.x - camera3d.target.x, camera3d.position.y - camera3d.target.y, camera3d.position.z - camera3d.target.z };
             viewVector = FVector3Normalize(viewVector);
             float viewDir[3] = {  viewVector.x, viewVector.y, viewVector.z };
-            SetShaderValue(shader, viewUniform, viewDir, UNIFORM_VEC3);
+            SetShaderValue(shader, viewUniform, viewDir, SHADER_UNIFORM_VEC3);
         }
 
         // Check if model transform matrix is used in shader and send it if needed
@@ -1299,7 +1298,7 @@ void UpdateShaderData(void)
         {
             // Convert time value to float array and send it to shader
             float time[1] = { currentTime };
-            SetShaderValue(shader, timeUniformV, time, UNIFORM_FLOAT);
+            SetShaderValue(shader, timeUniformV, time, SHADER_UNIFORM_FLOAT);
         }
  
         // Check if current time is used in fragment shader
@@ -1307,11 +1306,11 @@ void UpdateShaderData(void)
         {
             // Convert time value to float array and send it to shader
             float time[1] = { currentTime };
-            SetShaderValue(shader, timeUniformF, time, UNIFORM_FLOAT);
+            SetShaderValue(shader, timeUniformF, time, SHADER_UNIFORM_FLOAT);
         }
 
         float resolution[2] = { (fullVisor ? screenSize.x : (screenSize.x/4)), (fullVisor ? screenSize.y : (screenSize.y/4)) };
-        SetShaderValue(fxaa, fxaaUniform, resolution, UNIFORM_VEC2);
+        SetShaderValue(fxaa, fxaaUniform, resolution, SHADER_UNIFORM_VEC2);
     }
 }
 
@@ -1401,7 +1400,7 @@ void CompileShader(void)
     remove(VERTEX_PATH);
     remove(FRAGMENT_PATH);
 
-    model.materials[0].shader = GetShaderDefault();
+    model.materials[0] = LoadMaterialDefault();
     for (int i = 0; i < MAX_TEXTURES; i++) usedUnits[i] = false;
     viewUniform = -1;
     transformUniform = -1;
@@ -2054,7 +2053,7 @@ void ClearGraph(void)
 // Draw canvas space to create nodes
 void DrawCanvas(void)
 {
-    BeginShaderMode(GetShaderDefault());
+    BeginShaderMode(LoadMaterialDefault().shader);
 
         BeginTextureMode(gridTarget);
 
@@ -2515,14 +2514,6 @@ bool InterfaceToggle(Rectangle bounds, bool toggle)
     return toggle;
 }
 
-// Returns the extension of a file
-char *GetFileExtension(char *filename)
-{
-    char *dot = strrchr(filename, '.');
-    if (!dot || dot == filename) return "";
-    return (dot + 1);
-}
-
 // Check filename for specific extension
 bool CheckFileExtension(char *filename, char *extension)
 {
@@ -2548,7 +2539,7 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT);
+    SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
     InitWindow(screenSize.x, screenSize.y, "[fnode] Create shaders with visual scripting");
     iconTex = LoadTexture(WINDOW_ICON);
 
